@@ -219,60 +219,60 @@ if uploaded_file:
 
     if st.button("Generate Analysis"):
 
-        status = st.status("☁️ Cloud AI Processing", expanded=True)
+        with st.status("☁️ Cloud AI Processing", expanded=True) as status:
 
-    try:
-        status.write("📄 Preparing research paper...")
+            try:
+                status.write("📄 Preparing research paper...")
+                
+                status.write("🌐 Sending request to cloud AI service...")
+                
+                status.write("🤖 Generative AI model is processing the paper...")
         
-        status.write("🌐 Sending request to cloud AI service...")
+                response = model.generate_content(
+                    f"""
+                    Analyze the following research paper.
         
-        status.write("🤖 Generative AI model is processing the paper...")
+                    Return your response in the exact format:
+        
+                    SUMMARY:
+                    <summary>
+        
+                    KEY CONTRIBUTIONS:
+                    <bullet points>
+        
+                    LIMITATIONS:
+                    <bullet points>
+        
+                    FUTURE WORK:
+                    <bullet points>
+        
+                    Paper:
+        
+                    {text[:30000]}
+                    """
+                )
+        
+                status.write("📥 Receiving AI-generated response...")
+        
+                st.session_state.analysis = response.text
+        
+                status.update(
+                    label="✅ Cloud AI Analysis Complete",
+                    state="complete",
+                    expanded=False
+                )
 
-        response = model.generate_content(
-            f"""
-            Analyze the following research paper.
-
-            Return your response in the exact format:
-
-            SUMMARY:
-            <summary>
-
-            KEY CONTRIBUTIONS:
-            <bullet points>
-
-            LIMITATIONS:
-            <bullet points>
-
-            FUTURE WORK:
-            <bullet points>
-
-            Paper:
-
-            {text[:30000]}
-            """
-        )
-
-        status.write("📥 Receiving AI-generated response...")
-
-        st.session_state.analysis = response.text
-
-        status.update(
-            label="✅ Cloud AI Analysis Complete",
-            state="complete",
-            expanded=False
-        )
-
-    except Exception as e:
-
-        status.update(
-            label="❌ Cloud AI Processing Failed",
-            state="error",
-            expanded=True
-        )
-
-        st.error(
-            "Gemini quota exceeded or API error. Please try again later."
-        )
+            except Exception as e:
+        
+                status.update(
+                    label="❌ Cloud AI Processing Failed",
+                    state="error",
+                    expanded=True
+                )
+        
+                st.error(
+                    "Gemini quota exceeded or API error. Please try again later."
+                )
 
 
 if st.session_state.analysis:
