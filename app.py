@@ -219,7 +219,7 @@ if uploaded_file:
 
     if st.button("Generate Analysis"):
 
-    status = st.status("☁️ Cloud AI Processing", expanded=True)
+        status = st.status("☁️ Cloud AI Processing", expanded=True)
 
     try:
         status.write("📄 Preparing research paper...")
