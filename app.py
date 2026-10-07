@@ -212,9 +212,6 @@ if uploaded_file:
     st.write("Total Pages:", len(reader.pages))
     st.write("Total Characters Extracted:", len(text))
 
-    st.subheader("Preview")
-    st.write(text[:500])
-
     model = genai.GenerativeModel("gemini-2.5-flash")
 
     if st.button("Generate Analysis"):
