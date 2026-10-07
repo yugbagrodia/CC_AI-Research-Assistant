@@ -246,10 +246,10 @@ if uploaded_file:
                     FUTURE WORK:
                     <bullet points>
         
-                    Paper:
-        
-                    {text[:30000]}
-                    """
+                    Research Paper:
+                    {text[:20000]}
+                    """,
+                        request_options={"timeout": 60}
                 )
         
                 status.write("📥 Receiving AI-generated response...")
