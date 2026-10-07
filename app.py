@@ -268,7 +268,7 @@ if uploaded_file:
                 )
         
                 st.error(
-                    "Gemini quota exceeded or API error. Please try again later."
+                    f"Gemini API Error: {type(e).__name__}: {e}"
                 )
 
 
