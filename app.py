@@ -185,24 +185,26 @@ st.title("📚 AI Research Assistant")
 
 st.markdown(
     """
-    Analyze research papers with Generative AI and cloud computing.
+    An AI-powered research assistant combining Generative AI
+    and cloud computing to simplify research paper analysis.
 
-    Extract key insights, explore research findings, and compare
-    papers using Google's Gemini AI.
+    Powered by Google's Gemini AI and Amazon S3, the application
+    transforms research papers into structured insights and
+    enables secure cloud storage and retrieval.
 
     **Features**
-    - 📄 AI-powered paper summarization
+    - 📄 AI-powered research paper summarization
     - 💡 Key contributions, limitations, and future research directions
     - 💬 Interactive question answering
-    - 🔬 AI-powered comparison of two research papers
-    - ☁️ Secure cloud storage and retrieval using Amazon S3
+    - 🔬 AI-powered comparison of research papers
+    - ☁️ Cloud storage and retrieval using Amazon S3
     - 📑 Downloadable research analysis reports
     """
 )
 
 st.caption(
-    "Turn research papers into structured insights with AI-powered analysis "
-    "and cloud-based storage."
+    "Demonstrating the integration of Generative AI APIs "
+    "and cloud storage in a modern AI application."
 )
 
 
