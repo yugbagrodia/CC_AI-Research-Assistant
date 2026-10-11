@@ -8,6 +8,8 @@ from reportlab.lib.styles import getSampleStyleSheet
 from io import BytesIO
 import boto3
 from botocore.exceptions import ClientError, BotoCoreError
+import json
+import pandas as pd
 
 st.set_page_config(
     page_title="AI Research Assistant",
@@ -509,93 +511,186 @@ with col2:
 
 if paper1 and paper2:
 
-    if st.button("🔍 Compare Papers"):
+    if st.button("🔍 Compare Papers", key="compare_papers_button"):
 
         with st.spinner("☁️ Comparing papers using Cloud AI..."):
 
             try:
-
+                # Extract text from Paper 1
                 reader1 = PdfReader(paper1)
-                reader2 = PdfReader(paper2)
-
                 text1 = ""
-                text2 = ""
 
                 for page in reader1.pages:
                     page_text = page.extract_text()
 
                     if page_text:
-                        text1 += page_text
+                        text1 += page_text + "\n"
+
+                # Extract text from Paper 2
+                reader2 = PdfReader(paper2)
+                text2 = ""
 
                 for page in reader2.pages:
                     page_text = page.extract_text()
 
                     if page_text:
-                        text2 += page_text
+                        text2 += page_text + "\n"
 
+                # Validate extracted text
+                if not text1.strip() or not text2.strip():
+                    st.error(
+                        "Unable to extract text from one or both PDFs. "
+                        "Please upload text-readable research papers."
+                    )
+                    st.stop()
+
+                # Initialize Gemini
                 model = genai.GenerativeModel("gemini-2.5-flash")
 
-                response = model.generate_content(
-                    f"""
-                    Compare the following two research papers.
+                comparison_prompt = f"""
+                Compare the following two research papers carefully.
 
-                    Provide the comparison in the following format:
+                Use only information supported by the papers.
+                Do not invent results, contributions, or limitations.
+                If information is unavailable, state "Not specified".
 
-                    OVERVIEW:
-                    Give a brief overview of both papers.
+                Return ONLY valid JSON, without Markdown code fences,
+                using exactly this structure:
 
-                    OBJECTIVES:
-                    Compare the objectives of both papers.
+                {{
+                    "comparison": [
+                        {{
+                            "category": "Overview",
+                            "paper1": "Brief overview of Paper 1",
+                            "paper2": "Brief overview of Paper 2"
+                        }},
+                        {{
+                            "category": "Research Objectives",
+                            "paper1": "Objectives of Paper 1",
+                            "paper2": "Objectives of Paper 2"
+                        }},
+                        {{
+                            "category": "Methodology",
+                            "paper1": "Methodology of Paper 1",
+                            "paper2": "Methodology of Paper 2"
+                        }},
+                        {{
+                            "category": "Key Contributions",
+                            "paper1": "Contributions of Paper 1",
+                            "paper2": "Contributions of Paper 2"
+                        }},
+                        {{
+                            "category": "Limitations",
+                            "paper1": "Limitations of Paper 1",
+                            "paper2": "Limitations of Paper 2"
+                        }},
+                        {{
+                            "category": "Future Work",
+                            "paper1": "Future work of Paper 1",
+                            "paper2": "Future work of Paper 2"
+                        }}
+                    ],
+                    "overall_comparison": "Explain the major similarities "
+                    "and differences between the papers.",
+                    "key_insights": [
+                        "First important insight",
+                        "Second important insight",
+                        "Third important insight"
+                    ]
+                }}
 
-                    METHODOLOGY:
-                    Compare the methodologies used.
+                PAPER 1:
+                {text1[:12000]}
 
-                    KEY CONTRIBUTIONS:
-                    Compare the major contributions.
+                PAPER 2:
+                {text2[:12000]}
+                """
 
-                    LIMITATIONS:
-                    Compare the limitations.
+                response = model.generate_content(comparison_prompt)
 
-                    FUTURE WORK:
-                    Compare the suggested future directions.
+                if not response.text:
+                    st.error("Gemini returned an empty response.")
+                    st.stop()
 
-                    FINAL COMPARISON:
-                    Explain which paper provides a stronger contribution
-                    and why.
+                # Parse the JSON response
+                result_text = response.text.strip()
 
-                    PAPER 1:
-                    {text1[:20000]}
+                # Handle responses wrapped in Markdown code fences
+                if result_text.startswith("```"):
+                    result_text = result_text.split("\n", 1)[1]
+                    result_text = result_text.rsplit("```", 1)[0].strip()
 
-                    PAPER 2:
-                    {text2[:20000]}
-                    """
+                comparison_data = json.loads(result_text)
+
+                # Save results so they remain visible after reruns
+                st.session_state["paper_comparison"] = comparison_data
+                st.session_state["comparison_filenames"] = (
+                    paper1.name,
+                    paper2.name
                 )
 
-                st.success("✅ Papers compared successfully!")
-
-                st.subheader("📊 AI-Generated Comparison")
-
-                st.write(response.text)
+            except json.JSONDecodeError:
+                st.error(
+                    "The AI returned an unexpected format. "
+                    "Please click Compare Papers and try again."
+                )
 
             except Exception as e:
-
                 st.error(
-                    "Unable to compare the papers. "
-                    "Please check the files or Gemini API."
+                    f"Unable to compare the papers: "
+                    f"{type(e).__name__}: {e}"
                 )
 
-    if st.session_state.chat_history:
 
-        st.subheader("Conversation")
+# Display comparison results outside the button block
+if st.session_state.get("paper_comparison"):
 
-        for chat in reversed(st.session_state.chat_history):
+    comparison_data = st.session_state["paper_comparison"]
 
-            st.markdown(
-                f"**Question:** {chat['question']}"
-            )
+    filenames = st.session_state.get(
+        "comparison_filenames",
+        ("Paper 1", "Paper 2")
+    )
 
-            st.markdown(
-                f"**Answer:** {chat['answer']}"
-            )
+    st.success("✅ Papers compared successfully!")
 
-            st.divider()
+    st.subheader("📊 Research Paper Comparison")
+
+    st.caption(
+        f"Paper 1: {filenames[0]}  |  Paper 2: {filenames[1]}"
+    )
+
+    # Prepare the comparison table
+    df = pd.DataFrame(comparison_data["comparison"])
+
+    df = df.rename(
+        columns={
+            "category": "Category",
+            "paper1": filenames[0],
+            "paper2": filenames[1]
+        }
+    )
+
+    st.dataframe(
+        df,
+        use_container_width=True,
+        hide_index=True
+    )
+
+    # Overall comparison
+    st.subheader("🔍 Overall Comparison")
+
+    st.write(
+        comparison_data.get(
+            "overall_comparison",
+            "No overall comparison provided."
+        )
+    )
+
+    # Key insights
+    st.subheader("💡 Key Insights")
+
+    insights = comparison_data.get("key_insights", [])
+
+    for insight in insights:
+        st.markdown(f"- {insight}")
