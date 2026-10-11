@@ -325,7 +325,7 @@ if uploaded_file:
                     <bullet points>
         
                     Research Paper:
-                    {text[:20000]}
+                    {text[:30000]}
                     """,
                         request_options={"timeout": 60}
                 )
@@ -437,7 +437,7 @@ if st.session_state.analysis:
 
                     Research Paper:
 
-                    {st.session_state.paper_text[:10000]}
+                    {st.session_state.paper_text[:20000]}
 
                     Question:
 
@@ -543,10 +543,10 @@ if paper1 and paper2:
                     and why.
 
                     PAPER 1:
-                    {text1[:15000]}
+                    {text1[:20000]}
 
                     PAPER 2:
-                    {text2[:15000]}
+                    {text2[:20000]}
                     """
                 )
 
