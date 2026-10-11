@@ -200,34 +200,6 @@ st.caption(
     "Upload research papers, generate insights, and chat with the paper."
 )
 
-st.divider()
-
-st.subheader("☁️ Cloud Architecture")
-
-col1, col2, col3, col4, col5 = st.columns(5)
-
-with col1:
-    st.info("👤 User\n\nUploads PDF")
-
-with col2:
-    st.info("💻 Streamlit\n\nWeb Application")
-
-with col3:
-    st.info("🌐 Internet\n\nAPI Request")
-
-with col4:
-    st.info("☁️ Cloud AI\n\nGemini API")
-
-with col5:
-    st.info("🤖 GenAI Model\n\nGemini 2.5 Flash")
-
-st.caption(
-    "The application sends the research paper to a cloud-based "
-    "Generative AI service, which processes the request and returns "
-    "the generated analysis."
-)
-
-st.divider()
 
 uploaded_file = st.file_uploader(
     "Upload a Research Paper",
