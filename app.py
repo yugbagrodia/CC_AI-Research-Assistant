@@ -513,6 +513,83 @@ with col2:
 # Generate comparison
 if paper1 and paper2:
 
+    # Upload comparison papers to Amazon S3
+    st.markdown("---")
+    st.subheader("☁️ Cloud Storage")
+    
+    st.caption(
+        "Optionally store both research papers in your private "
+        "Amazon S3 bucket."
+    )
+    
+    if paper1 and paper2:
+    
+        if st.button(
+            "☁️ Upload Both Papers to AWS S3",
+            key="upload_comparison_papers_s3"
+        ):
+    
+            if s3_client is None or not AWS_S3_BUCKET:
+                st.error(
+                    "Amazon S3 is not configured. "
+                    "Please check your Streamlit Secrets."
+                )
+    
+            else:
+                import uuid
+    
+                papers_to_upload = [
+                    paper1,
+                    paper2
+                ]
+    
+                successful_uploads = 0
+    
+                for uploaded_paper in papers_to_upload:
+    
+                    # Generate a unique object key to avoid overwriting
+                    unique_id = uuid.uuid4().hex[:12]
+    
+                    safe_filename = os.path.basename(
+                        uploaded_paper.name
+                    )
+    
+                    object_key = (
+                        f"research-papers/{unique_id}_{safe_filename}"
+                    )
+    
+                    try:
+                        s3_client.upload_fileobj(
+                            BytesIO(uploaded_paper.getvalue()),
+                            AWS_S3_BUCKET,
+                            object_key,
+                            ExtraArgs={
+                                "ContentType": "application/pdf"
+                            }
+                        )
+    
+                        st.success(
+                            f"✅ {uploaded_paper.name} uploaded successfully."
+                        )
+    
+                        successful_uploads += 1
+    
+                    except Exception as e:
+                        st.error(
+                            f"❌ Failed to upload "
+                            f"{uploaded_paper.name}: {e}"
+                        )
+    
+                if successful_uploads == 2:
+                    st.success(
+                        "🎉 Both research papers are stored in Amazon S3!"
+                    )
+                elif successful_uploads == 1:
+                    st.warning(
+                        "One paper was uploaded successfully. "
+                        "Check the error above for the other paper."
+                    )
+
     if st.button("🔍 Compare Papers", key="compare_papers_button"):
 
         with st.spinner("☁️ Comparing papers using Cloud AI..."):
