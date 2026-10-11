@@ -509,6 +509,8 @@ with col2:
         key="comparison_paper2"
     )
 
+
+# Generate comparison
 if paper1 and paper2:
 
     if st.button("🔍 Compare Papers", key="compare_papers_button"):
@@ -542,92 +544,106 @@ if paper1 and paper2:
                         "Unable to extract text from one or both PDFs. "
                         "Please upload text-readable research papers."
                     )
-                    st.stop()
 
-                # Initialize Gemini
-                model = genai.GenerativeModel("gemini-2.5-flash")
+                else:
+                    # Initialize Gemini
+                    model = genai.GenerativeModel("gemini-2.5-flash")
 
-                comparison_prompt = f"""
-                Compare the following two research papers carefully.
+                    comparison_prompt = f"""
+                    Compare the following two research papers carefully.
 
-                Use only information supported by the papers.
-                Do not invent results, contributions, or limitations.
-                If information is unavailable, state "Not specified".
+                    RULES:
+                    - Use only information supported by the papers.
+                    - Do not invent results, contributions, or limitations.
+                    - If information is unavailable, write "Not specified".
+                    - Focus on meaningful differences, not repeated text.
+                    - Keep every description concise and informative.
+                    - Return valid JSON only, without Markdown code fences.
 
-                Return ONLY valid JSON, without Markdown code fences,
-                using exactly this structure:
+                    LENGTH GUIDELINES:
+                    - Overview: maximum 45 words per paper.
+                    - Research Objectives: maximum 35 words per paper.
+                    - Methodology: maximum 40 words per paper.
+                    - Key Contributions: maximum 40 words per paper.
+                    - Limitations: maximum 30 words per paper.
+                    - Future Work: maximum 30 words per paper.
+                    - Overall Comparison: maximum 100 words.
+                    - Key Insights: exactly 3 insights, maximum 20 words each.
 
-                {{
-                    "comparison": [
-                        {{
-                            "category": "Overview",
-                            "paper1": "Brief overview of Paper 1",
-                            "paper2": "Brief overview of Paper 2"
-                        }},
-                        {{
-                            "category": "Research Objectives",
-                            "paper1": "Objectives of Paper 1",
-                            "paper2": "Objectives of Paper 2"
-                        }},
-                        {{
-                            "category": "Methodology",
-                            "paper1": "Methodology of Paper 1",
-                            "paper2": "Methodology of Paper 2"
-                        }},
-                        {{
-                            "category": "Key Contributions",
-                            "paper1": "Contributions of Paper 1",
-                            "paper2": "Contributions of Paper 2"
-                        }},
-                        {{
-                            "category": "Limitations",
-                            "paper1": "Limitations of Paper 1",
-                            "paper2": "Limitations of Paper 2"
-                        }},
-                        {{
-                            "category": "Future Work",
-                            "paper1": "Future work of Paper 1",
-                            "paper2": "Future work of Paper 2"
-                        }}
-                    ],
-                    "overall_comparison": "Explain the major similarities "
-                    "and differences between the papers.",
-                    "key_insights": [
-                        "First important insight",
-                        "Second important insight",
-                        "Third important insight"
-                    ]
-                }}
+                    Return JSON using exactly this structure:
 
-                PAPER 1:
-                {text1[:20000]}
+                    {{
+                        "comparison": [
+                            {{
+                                "category": "Overview",
+                                "paper1": "Concise overview of Paper 1",
+                                "paper2": "Concise overview of Paper 2"
+                            }},
+                            {{
+                                "category": "Research Objectives",
+                                "paper1": "Objectives of Paper 1",
+                                "paper2": "Objectives of Paper 2"
+                            }},
+                            {{
+                                "category": "Methodology",
+                                "paper1": "Methodology of Paper 1",
+                                "paper2": "Methodology of Paper 2"
+                            }},
+                            {{
+                                "category": "Key Contributions",
+                                "paper1": "Contributions of Paper 1",
+                                "paper2": "Contributions of Paper 2"
+                            }},
+                            {{
+                                "category": "Limitations",
+                                "paper1": "Limitations of Paper 1",
+                                "paper2": "Limitations of Paper 2"
+                            }},
+                            {{
+                                "category": "Future Work",
+                                "paper1": "Future work of Paper 1",
+                                "paper2": "Future work of Paper 2"
+                            }}
+                        ],
+                        "overall_comparison": "Concise comparison of similarities and differences.",
+                        "key_insights": [
+                            "First important insight",
+                            "Second important insight",
+                            "Third important insight"
+                        ]
+                    }}
 
-                PAPER 2:
-                {text2[:20000]}
-                """
+                    PAPER 1:
+                    {text1[:20000]}
 
-                response = model.generate_content(comparison_prompt)
+                    PAPER 2:
+                    {text2[:20000]}
+                    """
 
-                if not response.text:
-                    st.error("Gemini returned an empty response.")
-                    st.stop()
+                    response = model.generate_content(comparison_prompt)
 
-                # Parse the JSON response
-                result_text = response.text.strip()
+                    if not response.text:
+                        st.error("Gemini returned an empty response.")
 
-                # Handle responses wrapped in Markdown code fences
-                if result_text.startswith("```"):
-                    result_text = result_text.split("\n", 1)[1]
-                    result_text = result_text.rsplit("```", 1)[0].strip()
+                    else:
+                        # Clean the response
+                        result_text = response.text.strip()
 
-                comparison_data = json.loads(result_text)
+                        # Remove Markdown code fences if present
+                        if result_text.startswith("```"):
+                            result_text = result_text.split("\n", 1)[1]
+                            result_text = result_text.rsplit("```", 1)[0].strip()
 
-                # Save results so they remain visible after reruns
-                st.session_state["paper_comparison"] = comparison_data
-                st.session_state["comparison_filenames"] = (
-                    paper1.name,
-                    paper2.name
-                )
+                        # Parse JSON
+                        comparison_data = json.loads(result_text)
+
+                        # Save results in session state
+                        st.session_state["paper_comparison"] = comparison_data
+
+                        st.session_state["comparison_filenames"] = (
+                            paper1.name,
+                            paper2.name
+                        )
 
             except json.JSONDecodeError:
                 st.error(
@@ -642,7 +658,7 @@ if paper1 and paper2:
                 )
 
 
-# Display comparison results outside the button block
+# Display comparison results
 if st.session_state.get("paper_comparison"):
 
     comparison_data = st.session_state["paper_comparison"]
@@ -652,47 +668,63 @@ if st.session_state.get("paper_comparison"):
         ("Paper 1", "Paper 2")
     )
 
+    # Short labels for a cleaner interface
+    paper1_label = "Paper 1"
+    paper2_label = "Paper 2"
+
+    st.divider()
+
     st.success("✅ Papers compared successfully!")
 
     st.subheader("📊 Research Paper Comparison")
 
     st.caption(
-        f"Paper 1: {filenames[0]} | Paper 2: {filenames[1]}"
+        f"Paper 1: {filenames[0]}  |  Paper 2: {filenames[1]}"
     )
 
-    # Display each comparison category in a separate card
-    for item in comparison_data["comparison"]:
+    # Compact comparison sections
+    for index, item in enumerate(comparison_data.get("comparison", [])):
 
         category = item.get("category", "Comparison")
 
-        with st.container(border=True):
+        with st.expander(category, expanded=(index == 0)):
 
-            st.markdown(f"### {category}")
-
-            col1, col2 = st.columns(2, gap="medium")
+            col1, col2 = st.columns(2, gap="large")
 
             with col1:
-                st.markdown(f"**📄 {filenames[0]}**")
-                st.write(item.get("paper1", "Not specified"))
+                st.markdown(f"**📄 {paper1_label}**")
+                st.caption(filenames[0])
+
+                st.write(
+                    item.get("paper1", "Not specified")
+                )
 
             with col2:
-                st.markdown(f"**📄 {filenames[1]}**")
-                st.write(item.get("paper2", "Not specified"))
+                st.markdown(f"**📄 {paper2_label}**")
+                st.caption(filenames[1])
 
-    # Overall comparison — outside the loop
+                st.write(
+                    item.get("paper2", "Not specified")
+                )
+
+    # Overall comparison
     st.subheader("🔍 Overall Comparison")
 
-    st.write(
-        comparison_data.get(
-            "overall_comparison",
-            "No overall comparison provided."
+    with st.container(border=True):
+        st.write(
+            comparison_data.get(
+                "overall_comparison",
+                "No overall comparison provided."
+            )
         )
-    )
 
-    # Key insights — outside the loop
+    # Key insights
     st.subheader("💡 Key Insights")
 
     insights = comparison_data.get("key_insights", [])
 
-    for insight in insights:
-        st.markdown(f"- {insight}")
+    if insights:
+        for index, insight in enumerate(insights, start=1):
+            st.markdown(f"**{index}.** {insight}")
+    else:
+        st.info("No key insights were generated.")
