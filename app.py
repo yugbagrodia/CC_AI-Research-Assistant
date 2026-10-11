@@ -1171,18 +1171,6 @@ else:
                         )
                     )
 
-                st.download_button(
-                    label="⬇️ Download Saved Analysis (JSON)",
-                    data=json.dumps(
-                        saved_analysis,
-                        ensure_ascii=False,
-                        indent=4
-                    ),
-                    file_name=selected_filename,
-                    mime="application/json",
-                    key="download_saved_analysis_json"
-                )
-
     except Exception as e:
 
         st.error(
