@@ -438,6 +438,97 @@ if st.session_state.analysis:
     with tab4:
         st.write(future_work)
 
+    # ==========================================
+    # SAVE AI ANALYSIS TO AMAZON S3
+    # ==========================================
+
+    st.markdown("---")
+    st.subheader("☁️ Save Analysis to Cloud")
+
+    st.caption(
+        "Save this AI-generated analysis to Amazon S3 "
+        "so you can retrieve it later without calling Gemini again."
+    )
+
+    if s3_client is None or not AWS_S3_BUCKET:
+
+        st.warning(
+            "Amazon S3 is not configured. "
+            "Check your Streamlit Secrets."
+        )
+
+    else:
+
+        if st.button(
+            "☁️ Save Analysis to Amazon S3",
+            key="save_analysis_to_s3"
+        ):
+
+            try:
+                # Prepare analysis data
+                analysis_data = {
+                    "paper_name": uploaded_file.name,
+                    "summary": summary,
+                    "key_contributions": contributions,
+                    "limitations": limitations,
+                    "future_work": future_work,
+                    "full_analysis": analysis
+                }
+
+                # Convert analysis into JSON
+                json_data = json.dumps(
+                    analysis_data,
+                    ensure_ascii=False,
+                    indent=4
+                )
+
+                # Create a safe filename
+                import hashlib
+
+                paper_hash = hashlib.sha256(
+                    uploaded_file.getvalue()
+                ).hexdigest()[:12]
+
+                original_name = os.path.splitext(
+                    os.path.basename(uploaded_file.name)
+                )[0]
+
+                safe_name = "".join(
+                    character
+                    if character.isalnum() or character in "-_"
+                    else "_"
+                    for character in original_name
+                )
+
+                object_key = (
+                    f"analysis-results/{paper_hash}_"
+                    f"{safe_name}_analysis.json"
+                )
+
+                # Upload JSON to S3
+                s3_client.put_object(
+                    Bucket=AWS_S3_BUCKET,
+                    Key=object_key,
+                    Body=json_data.encode("utf-8"),
+                    ContentType="application/json"
+                )
+
+                st.success(
+                    "✅ Analysis saved successfully to Amazon S3!"
+                )
+
+                st.code(object_key, language=None)
+
+            except Exception as e:
+
+                st.error(
+                    "Unable to save analysis to Amazon S3."
+                )
+
+                st.caption(
+                    f"Error: {type(e).__name__}: {e}"
+                )
+
     st.divider()
 
     st.subheader("Ask Questions About This Paper")
