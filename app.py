@@ -6,6 +6,8 @@ import google.generativeai as genai
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet
 from io import BytesIO
+import boto3
+from botocore.exceptions import ClientError, BotoCoreError
 
 st.set_page_config(
     page_title="AI Research Assistant",
@@ -17,6 +19,26 @@ load_dotenv()
 
 api_key = os.getenv("GEMINI_API_KEY")
 genai.configure(api_key=api_key)
+
+# AWS S3 Configuration
+s3_client = None
+
+try:
+    AWS_ACCESS_KEY_ID = st.secrets["AWS_ACCESS_KEY_ID"]
+    AWS_SECRET_ACCESS_KEY = st.secrets["AWS_SECRET_ACCESS_KEY"]
+    AWS_REGION = st.secrets["AWS_REGION"]
+    AWS_S3_BUCKET = st.secrets["AWS_S3_BUCKET"]
+
+    s3_client = boto3.client(
+        "s3",
+        aws_access_key_id=AWS_ACCESS_KEY_ID,
+        aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+        region_name=AWS_REGION
+    )
+
+except Exception:
+    AWS_S3_BUCKET = None
+    st.sidebar.warning("Amazon S3 is not configured.")
 
 with st.sidebar:
 
@@ -195,6 +217,64 @@ if uploaded_file:
 
     st.write("File Name:", uploaded_file.name)
     st.write("File Size:", uploaded_file.size, "bytes")
+
+        # Amazon S3 Cloud Storage
+    st.subheader("☁️ Amazon S3 Cloud Storage")
+
+    if s3_client is not None:
+
+        st.success("Amazon S3 connection configured")
+
+        if st.button("☁️ Upload PDF to Amazon S3"):
+
+            object_key = f"research-papers/{uploaded_file.name}"
+
+            try:
+                with st.status(
+                    "☁️ Uploading research paper to Amazon S3...",
+                    expanded=True
+                ) as status:
+
+                    status.write("Preparing PDF...")
+                    status.write("Connecting to Amazon S3...")
+                    status.write("Uploading research paper...")
+
+                    s3_client.upload_fileobj(
+                        BytesIO(uploaded_file.getvalue()),
+                        AWS_S3_BUCKET,
+                        object_key,
+                        ExtraArgs={
+                            "ContentType": "application/pdf"
+                        }
+                    )
+
+                    status.update(
+                        label="✅ Upload completed successfully",
+                        state="complete",
+                        expanded=False
+                    )
+
+                st.success(
+                    f"Stored in S3: {object_key}"
+                )
+
+            except (ClientError, BotoCoreError) as e:
+
+                st.error(
+                    f"Amazon S3 upload failed: {e}"
+                )
+
+            except Exception as e:
+
+                st.error(
+                    f"Unexpected upload error: {e}"
+                )
+
+    else:
+        st.warning(
+            "Amazon S3 credentials are not configured. "
+            "Check your Streamlit Secrets."
+        )
 
     reader = PdfReader(uploaded_file)
 
