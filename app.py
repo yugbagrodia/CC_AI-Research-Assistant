@@ -72,6 +72,27 @@ with st.sidebar:
     st.write("✅ Future Work")
     st.write("✅ Paper Chat")
 
+    st.markdown("---")
+
+    st.subheader("☁️ Cloud Service Status")
+
+    # Gemini API configuration status
+    if api_key:
+        st.success("🤖 Gemini API: Configured")
+    else:
+        st.error("🤖 Gemini API: Missing API Key")
+
+    # AWS S3 configuration status
+    if s3_client is not None:
+        st.success("☁️ Amazon S3: Configured")
+    else:
+        st.error("☁️ Amazon S3: Not Configured")
+
+    # PDF processing status
+    st.info("📄 PDF Processing: Ready")
+
+    st.caption("AI: Gemini API | Storage: Amazon S3")
+
 if "analysis" not in st.session_state:
     st.session_state.analysis = None
 
