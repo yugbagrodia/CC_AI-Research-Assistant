@@ -218,6 +218,22 @@ if uploaded_file:
     st.write("File Name:", uploaded_file.name)
     st.write("File Size:", uploaded_file.size, "bytes")
 
+    reader = PdfReader(uploaded_file)
+
+    text = ""
+
+    for page in reader.pages:
+
+        page_text = page.extract_text()
+
+        if page_text:
+            text += page_text
+
+    st.session_state.paper_text = text
+
+    st.write("Total Pages:", len(reader.pages))
+    st.write("Total Characters Extracted:", len(text))
+
         # Amazon S3 Cloud Storage
     st.subheader("☁️ Amazon S3 Cloud Storage")
 
@@ -275,22 +291,7 @@ if uploaded_file:
             "Amazon S3 credentials are not configured. "
             "Check your Streamlit Secrets."
         )
-
-    reader = PdfReader(uploaded_file)
-
-    text = ""
-
-    for page in reader.pages:
-
-        page_text = page.extract_text()
-
-        if page_text:
-            text += page_text
-
-    st.session_state.paper_text = text
-
-    st.write("Total Pages:", len(reader.pages))
-    st.write("Total Characters Extracted:", len(text))
+        
 
     model = genai.GenerativeModel("gemini-2.5-flash")
 
