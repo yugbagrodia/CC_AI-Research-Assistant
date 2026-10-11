@@ -600,10 +600,10 @@ if paper1 and paper2:
                 }}
 
                 PAPER 1:
-                {text1[:12000]}
+                {text1[:20000]}
 
                 PAPER 2:
-                {text2[:12000]}
+                {text2[:20000]}
                 """
 
                 response = model.generate_content(comparison_prompt)
