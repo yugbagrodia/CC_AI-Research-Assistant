@@ -656,30 +656,30 @@ if st.session_state.get("paper_comparison"):
 
     st.subheader("📊 Research Paper Comparison")
 
-st.caption(
-    f"Paper 1: {filenames[0]}  |  Paper 2: {filenames[1]}"
-)
+    st.caption(
+        f"Paper 1: {filenames[0]} | Paper 2: {filenames[1]}"
+    )
 
-# Display each comparison category in a separate card
-for item in comparison_data["comparison"]:
+    # Display each comparison category in a separate card
+    for item in comparison_data["comparison"]:
 
-    category = item.get("category", "Comparison")
+        category = item.get("category", "Comparison")
 
-    with st.container(border=True):
+        with st.container(border=True):
 
-        st.markdown(f"### {category}")
+            st.markdown(f"### {category}")
 
-        col1, col2 = st.columns(2, gap="medium")
+            col1, col2 = st.columns(2, gap="medium")
 
-        with col1:
-            st.markdown("**📄 Paper 1**")
-            st.write(item.get("paper1", "Not specified"))
+            with col1:
+                st.markdown(f"**📄 {filenames[0]}**")
+                st.write(item.get("paper1", "Not specified"))
 
-        with col2:
-            st.markdown("**📄 Paper 2**")
-            st.write(item.get("paper2", "Not specified"))
+            with col2:
+                st.markdown(f"**📄 {filenames[1]}**")
+                st.write(item.get("paper2", "Not specified"))
 
-    # Overall comparison
+    # Overall comparison — outside the loop
     st.subheader("🔍 Overall Comparison")
 
     st.write(
@@ -689,7 +689,7 @@ for item in comparison_data["comparison"]:
         )
     )
 
-    # Key insights
+    # Key insights — outside the loop
     st.subheader("💡 Key Insights")
 
     insights = comparison_data.get("key_insights", [])
