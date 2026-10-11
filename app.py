@@ -805,3 +805,126 @@ if st.session_state.get("paper_comparison"):
             st.markdown(f"**{index}.** {insight}")
     else:
         st.info("No key insights were generated.")
+
+
+# ==========================================
+# CLOUD RESEARCH LIBRARY
+# ==========================================
+
+st.markdown("---")
+
+st.header("📚 Cloud Research Library")
+
+st.write(
+    "View and download research papers stored "
+    "in your private Amazon S3 bucket."
+)
+
+if s3_client is None or not AWS_S3_BUCKET:
+
+    st.warning(
+        "Amazon S3 is not configured. "
+        "Please check your Streamlit Secrets."
+    )
+
+else:
+
+    try:
+        response = s3_client.list_objects_v2(
+            Bucket=AWS_S3_BUCKET,
+            Prefix="research-papers/"
+        )
+
+        papers = response.get("Contents", [])
+
+        if not papers:
+
+            st.info(
+                "No research papers found in cloud storage. "
+                "Upload a paper to get started."
+            )
+
+        else:
+
+            # Display total number of papers
+            st.success(
+                f"📄 {len(papers)} research paper(s) found in S3."
+            )
+
+            # Search functionality
+            search_query = st.text_input(
+                "🔍 Search research papers by filename",
+                key="cloud_library_search"
+            )
+
+            filtered_papers = [
+                paper for paper in papers
+                if search_query.lower()
+                in paper["Key"].split("/")[-1].lower()
+            ]
+
+            if not filtered_papers:
+
+                st.info("No matching research papers found.")
+
+            else:
+
+                # Display papers
+                for paper in filtered_papers:
+
+                    object_key = paper["Key"]
+                    filename = object_key.split("/")[-1]
+
+                    # Ignore folder placeholders
+                    if not filename:
+                        continue
+
+                    with st.container(border=True):
+
+                        col1, col2 = st.columns([3, 1])
+
+                        with col1:
+
+                            st.markdown(f"**📄 {filename}**")
+
+                            st.caption(
+                                f"Size: {paper['Size'] / 1024:.2f} KB"
+                            )
+
+                            st.caption(
+                                f"Last modified: "
+                                f"{paper['LastModified'].strftime('%d %b %Y, %I:%M %p')}"
+                            )
+
+                        with col2:
+
+                            if st.button(
+                                "⬇️ Download",
+                                key=f"download_{object_key}"
+                            ):
+
+                                download_url = (
+                                    s3_client.generate_presigned_url(
+                                        "get_object",
+                                        Params={
+                                            "Bucket": AWS_S3_BUCKET,
+                                            "Key": object_key
+                                        },
+                                        ExpiresIn=300
+                                    )
+                                )
+
+                                st.link_button(
+                                    "Open Download Link",
+                                    download_url
+                                )
+
+    except Exception as e:
+
+        st.error(
+            "Unable to load research papers from Amazon S3."
+        )
+
+        st.caption(
+            "Check your AWS permissions and bucket configuration."
+        )
