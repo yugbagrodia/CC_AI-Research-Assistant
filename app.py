@@ -185,19 +185,24 @@ st.title("📚 AI Research Assistant")
 
 st.markdown(
     """
-    Analyze research papers using Gemini AI.
-    
-    Generate:
-    - Summary
-    - Key Contributions
-    - Limitations
-    - Future Work
-    - Interactive Q&A
+    Analyze research papers with Generative AI and cloud computing.
+
+    Extract key insights, explore research findings, and compare
+    papers using Google's Gemini AI.
+
+    **Features**
+    - 📄 AI-powered paper summarization
+    - 💡 Key contributions, limitations, and future research directions
+    - 💬 Interactive question answering
+    - 🔬 AI-powered comparison of two research papers
+    - ☁️ Secure cloud storage and retrieval using Amazon S3
+    - 📑 Downloadable research analysis reports
     """
 )
 
 st.caption(
-    "Upload research papers, generate insights, and chat with the paper."
+    "Turn research papers into structured insights with AI-powered analysis "
+    "and cloud-based storage."
 )
 
 
