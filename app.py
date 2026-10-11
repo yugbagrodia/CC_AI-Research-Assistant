@@ -656,26 +656,28 @@ if st.session_state.get("paper_comparison"):
 
     st.subheader("📊 Research Paper Comparison")
 
-    st.caption(
-        f"Paper 1: {filenames[0]}  |  Paper 2: {filenames[1]}"
-    )
+st.caption(
+    f"Paper 1: {filenames[0]}  |  Paper 2: {filenames[1]}"
+)
 
-    # Prepare the comparison table
-    df = pd.DataFrame(comparison_data["comparison"])
+# Display each comparison category in a separate card
+for item in comparison_data["comparison"]:
 
-    df = df.rename(
-        columns={
-            "category": "Category",
-            "paper1": filenames[0],
-            "paper2": filenames[1]
-        }
-    )
+    category = item.get("category", "Comparison")
 
-    st.dataframe(
-        df,
-        use_container_width=True,
-        hide_index=True
-    )
+    with st.container(border=True):
+
+        st.markdown(f"### {category}")
+
+        col1, col2 = st.columns(2, gap="medium")
+
+        with col1:
+            st.markdown("**📄 Paper 1**")
+            st.write(item.get("paper1", "Not specified"))
+
+        with col2:
+            st.markdown("**📄 Paper 2**")
+            st.write(item.get("paper2", "Not specified"))
 
     # Overall comparison
     st.subheader("🔍 Overall Comparison")
