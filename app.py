@@ -1019,3 +1019,176 @@ else:
         st.caption(
             "Check your AWS permissions and bucket configuration."
         )
+
+# ==========================================
+# SAVED AI ANALYSES
+# ==========================================
+
+st.markdown("---")
+
+st.header("☁️ Saved AI Analyses")
+
+st.write(
+    "Retrieve previously generated AI analyses from Amazon S3 "
+    "without making another Gemini API call."
+)
+
+if s3_client is None or not AWS_S3_BUCKET:
+
+    st.warning(
+        "Amazon S3 is not configured. "
+        "Check your Streamlit Secrets."
+    )
+
+else:
+
+    try:
+        response = s3_client.list_objects_v2(
+            Bucket=AWS_S3_BUCKET,
+            Prefix="analysis-results/"
+        )
+
+        analysis_files = [
+            obj for obj in response.get("Contents", [])
+            if obj["Key"].endswith(".json")
+        ]
+
+        if not analysis_files:
+
+            st.info(
+                "No saved analyses found. "
+                "Generate an analysis and save it to the cloud first."
+            )
+
+        else:
+
+            # Create a mapping between filenames and S3 object keys
+            analysis_options = {
+                obj["Key"].split("/")[-1]: obj["Key"]
+                for obj in analysis_files
+            }
+
+            selected_filename = st.selectbox(
+                "Select a saved analysis",
+                options=list(analysis_options.keys()),
+                key="saved_analysis_selector"
+            )
+
+            if st.button(
+                "📂 Load Saved Analysis",
+                key="load_saved_analysis"
+            ):
+
+                selected_key = analysis_options[selected_filename]
+
+                with st.spinner("Retrieving analysis from Amazon S3..."):
+
+                    saved_object = s3_client.get_object(
+                        Bucket=AWS_S3_BUCKET,
+                        Key=selected_key
+                    )
+
+                    saved_analysis = json.loads(
+                        saved_object["Body"].read().decode("utf-8")
+                    )
+
+                    st.session_state["loaded_cloud_analysis"] = (
+                        saved_analysis
+                    )
+
+                    st.session_state["loaded_cloud_analysis_name"] = (
+                        selected_filename
+                    )
+
+                st.success("Saved analysis loaded successfully!")
+
+            # Display the previously loaded analysis
+            if st.session_state.get("loaded_cloud_analysis"):
+
+                saved_analysis = st.session_state[
+                    "loaded_cloud_analysis"
+                ]
+
+                st.subheader(
+                    st.session_state.get(
+                        "loaded_cloud_analysis_name",
+                        "Saved Analysis"
+                    )
+                )
+
+                st.caption(
+                    "Retrieved from Amazon S3. "
+                    "No new Gemini analysis was generated."
+                )
+
+                st.markdown("### 📄 Research Paper")
+
+                st.write(
+                    saved_analysis.get(
+                        "paper_name",
+                        "Filename not available"
+                    )
+                )
+
+                tab1, tab2, tab3, tab4 = st.tabs(
+                    [
+                        "Summary",
+                        "Contributions",
+                        "Limitations",
+                        "Future Work"
+                    ]
+                )
+
+                with tab1:
+                    st.write(
+                        saved_analysis.get(
+                            "summary",
+                            "No summary available."
+                        )
+                    )
+
+                with tab2:
+                    st.write(
+                        saved_analysis.get(
+                            "key_contributions",
+                            "No contributions available."
+                        )
+                    )
+
+                with tab3:
+                    st.write(
+                        saved_analysis.get(
+                            "limitations",
+                            "No limitations available."
+                        )
+                    )
+
+                with tab4:
+                    st.write(
+                        saved_analysis.get(
+                            "future_work",
+                            "No future work available."
+                        )
+                    )
+
+                st.download_button(
+                    label="⬇️ Download Saved Analysis (JSON)",
+                    data=json.dumps(
+                        saved_analysis,
+                        ensure_ascii=False,
+                        indent=4
+                    ),
+                    file_name=selected_filename,
+                    mime="application/json",
+                    key="download_saved_analysis_json"
+                )
+
+    except Exception as e:
+
+        st.error(
+            "Unable to retrieve saved analyses from Amazon S3."
+        )
+
+        st.caption(
+            f"Error: {type(e).__name__}: {e}"
+        )
